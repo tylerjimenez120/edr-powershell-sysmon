@@ -1,0 +1,108 @@
+<Sysmon schemaversion="4.91">
+  <EventFiltering>
+
+    <!-- EVENT ID 1: CREACION DE PROCESOS -->
+    <RuleGroup name="EDR_ProcessCreate" groupRelation="or">
+      <ProcessCreate onmatch="include">
+        <Rule name="Alerta_Reconocimiento" groupRelation="and">
+          <Image condition="end with">whoami.exe</Image>
+          <ParentImage condition="excludes any">Code.exe;explorer.exe;svchost.exe;services.exe;TiWorker.exe;msiexec.exe;devenv.exe;WindowsTerminal.exe</ParentImage>
+        </Rule>
+        <Rule name="Alerta_Reconocimiento_nltest" groupRelation="or">
+          <Image condition="end with">nltest.exe</Image>
+        </Rule>
+        <Rule name="Alerta_Reconocimiento_net" groupRelation="and">
+          <Image condition="end with">net.exe</Image>
+          <CommandLine condition="contains any">user;group;localgroup</CommandLine>
+        </Rule>
+        <Rule name="Alerta_EvasionPowerShell" groupRelation="and">
+          <CommandLine condition="contains any">-ExecutionPolicy Bypass;-ep bypass;-EncodedCommand;-enc </CommandLine>
+          <CommandLine condition="excludes any">ms-vscode.powershell;PowerShellEditorServices;PSES-VSCode;Microsoft.VSCode</CommandLine>
+        </Rule>
+        <Rule name="Alerta_LateralMovement" groupRelation="or">
+          <Image condition="end with">psexec.exe</Image>
+          <Image condition="end with">psexec64.exe</Image>
+        </Rule>
+        <Rule name="Alerta_LateralMovement_wmic" groupRelation="and">
+          <Image condition="end with">wmic.exe</Image>
+          <CommandLine condition="contains">/node:</CommandLine>
+        </Rule>
+        <Rule name="Alerta_Mimikatz" groupRelation="or">
+          <CommandLine condition="contains any">sekurlsa;lsadump;privilege::debug;coffee</CommandLine>
+        </Rule>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- EVENT ID 10: ACCESO A PROCESOS -->
+    <RuleGroup name="EDR_ProcessAccess" groupRelation="or">
+      <ProcessAccess onmatch="include">
+        <Rule name="Alerta_CredentialDump" groupRelation="and">
+          <TargetImage condition="end with">lsass.exe</TargetImage>
+          <GrantedAccess condition="contains any">0x1010;0x1038;0x143a;0x1fffff</GrantedAccess>
+          <SourceImage condition="excludes any">MsMpEng.exe;WerFault.exe;taskmgr.exe;svchost.exe</SourceImage>
+        </Rule>
+      </ProcessAccess>
+    </RuleGroup>
+
+    <!-- EVENT ID 11: CREACION DE ARCHIVOS (Aplanado) -->
+    <RuleGroup name="EDR_FileCreate" groupRelation="or">
+      <FileCreate onmatch="include">
+        <!-- Temp (Local) -->
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.exe</TargetFilename>
+          <TargetFilename condition="excludes any">\__PSScriptPolicyTest_</TargetFilename>
+        </Rule>
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\AppData\Local\Temp\</TargetFilename>
+          <TargetFilename condition="end with">.vbs</TargetFilename>
+        </Rule>
+
+        <!-- Roaming -->
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\AppData\Roaming\</TargetFilename>
+          <TargetFilename condition="end with">.exe</TargetFilename>
+          <TargetFilename condition="excludes any">\Code\;\npm\</TargetFilename>
+        </Rule>
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\AppData\Roaming\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+
+        <!-- Users Public -->
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\Users\Public\</TargetFilename>
+          <TargetFilename condition="end with">.exe</TargetFilename>
+        </Rule>
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\Users\Public\</TargetFilename>
+          <TargetFilename condition="end with">.dll</TargetFilename>
+        </Rule>
+        <Rule name="Alerta_ArchivoInfostealer" groupRelation="and">
+          <TargetFilename condition="contains">\Users\Public\</TargetFilename>
+          <TargetFilename condition="end with">.vbs</TargetFilename>
+        </Rule>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- EVENT ID 3: CONEXIONES DE RED -->
+    <RuleGroup name="EDR_NetworkConnect" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <Rule name="Alerta_C2_Beacon" groupRelation="and">
+          <Image condition="contains any">powershell.exe;cmd.exe;wscript.exe;cscript.exe;mshta.exe;regsvr32.exe</Image>
+          <Initiated condition="is">true</Initiated>
+          <DestinationPort condition="is not">80</DestinationPort>
+          <DestinationPort condition="is not">443</DestinationPort>
+          <DestinationPort condition="is not">53</DestinationPort>
+          <DestinationPort condition="is not">8080</DestinationPort>
+          <DestinationPort condition="is not">8443</DestinationPort>
+        </Rule>
+      </NetworkConnect>
+    </RuleGroup>
+
+  </EventFiltering>
+</Sysmon>

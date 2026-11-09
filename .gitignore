@@ -1,0 +1,19 @@
+
+# Runtime logs
+*.log
+edr_lab_actions.jsonl
+
+# Lab artifacts
+edr_lab_quarantine/
+
+# Local binaries and backups
+sysinternals/
+Sysmon.exe
+Sysmon64.exe
+archive/
+*.backup.ps1
+
+# Editor and temporary files
+.vscode/
+*.tmp
+*.bak
